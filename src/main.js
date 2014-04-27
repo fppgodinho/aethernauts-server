@@ -1,20 +1,13 @@
-var net = require('net');
 
 var clients = [];
 
-var server = net.createServer(function(socket) {
-    console.log('server connected', socket.remoteAddress);
-    socket.on('end', function() {
-        console.log('server disconnected');
+var ws      = require('ws').Server;
+var server  = new ws({port: 81});
+server.on('connection', function(socket, a, b, c)                                        {
+    socket.on('message', function(message)                                      {
+        console.log('Received: ', message);
     });
-    socket.write('hello\r\n');
-    socket.pipe(socket);
-    socket.end();
-    
     clients.push(socket);
     
-});
-
-server.listen(4000, function() {
-  console.log('server bound');
+    console.log(socket.upgradeReq.connection.remoteAddress + ' has connected!');
 });
