@@ -1,5 +1,5 @@
 
-var name    = 'Aethernauts.darkhounds.net';
+var name    = 'aethernauts.darkhounds.net';
 var port    = '81';
 var salt    = 'A3th3rN4ut5';
 var crypto  = require('crypto');
