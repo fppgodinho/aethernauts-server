@@ -1,14 +1,14 @@
 {
-  "name": 			"Aethernauts-server",
-  "preferGlobal":	false,
-  "version": 		"0.0.1",
-  "author": 		"Fernando Godinho <fppgodinho@gmail.com>",
-  "description": 	"An open-source game server project based on Node.js and Websockets technology inspired on steam-punk and space flight",
-  "contributors": 	[],
-  "main": 			"./src/main",
-  "repository": 	{
-    "type":		"git",
-    "url":		"https://github.com/cainvampyr/http-server.git"
+  "name": "Aethernauts-server",
+  "preferGlobal": false,
+  "version": "0.0.1",
+  "author": "Fernando Godinho <fppgodinho@gmail.com>",
+  "description": "An open-source game server project based on Node.js and Websockets technology inspired on steam-punk and space flight",
+  "contributors": [],
+  "main": "./src/main",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cainvampyr/http-server.git"
   },
   "keywords": [
     "game",
@@ -16,9 +16,11 @@
     "websocket",
     "node.js"
   ],
-  "dependencies" : {
+  "dependencies": {
+    "nedb": "~0.10.5",
+    "ws": "~0.4.31"
   },
-  "bundledDependencies": [],  
+  "bundledDependencies": [],
   "license": "MIT",
   "engines": {
     "node": ">=0.10.25"
