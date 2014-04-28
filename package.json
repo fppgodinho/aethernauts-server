@@ -1,14 +1,22 @@
 {
-  "name": "Aethernauts-server",
-  "preferGlobal": false,
+  "name": "aethernaut-server",
   "version": "0.0.1",
-  "author": "Fernando Godinho <fppgodinho@gmail.com>",
   "description": "An open-source game server project based on Node.js and Websockets technology inspired on steam-punk and space flight",
-  "contributors": [],
-  "main": "./src/main",
+  "main": "src/main.js",
+  "dependencies": {
+    "grunt": "~0.4.4",
+    "ws": "^0.4.31",
+    "nedb": "^0.10.5"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.4"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cainvampyr/http-server.git"
+    "url": "https://github.com/fppgodinho/aethernaut-server.git"
   },
   "keywords": [
     "game",
@@ -16,13 +24,13 @@
     "websocket",
     "node.js"
   ],
-  "dependencies": {
-    "nedb": "~0.10.5",
-    "ws": "~0.4.31"
-  },
-  "bundledDependencies": [],
+  "author": "Fernando Pedro Pereira Godinho <fppgodinho@gmail.com>",
   "license": "MIT",
   "engines": {
     "node": ">=0.10.25"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/fppgodinho/aethernaut-server/issues"
+  },
+  "homepage": "https://github.com/fppgodinho/aethernaut-server"
 }
