@@ -2,7 +2,6 @@
 
 module.exports = function(grunt)                                                {
     grunt.loadNpmTasks('grunt-execute');
-    grunt.loadNpmTasks('grunt-run');
     
     grunt.initConfig({
         execute: {
