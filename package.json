@@ -9,7 +9,8 @@
     "nedb": "^0.10.5"
   },
   "devDependencies": {
-    "grunt": "^0.4.4"
+    "grunt": "^0.4.4",
+    "grunt-execute": "^0.2.1"
   },
   "scripts": {
     "start": "node src/net/darkhounds/aethernauts/server/main.js",
