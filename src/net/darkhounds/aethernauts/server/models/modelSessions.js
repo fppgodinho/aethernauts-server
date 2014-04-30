@@ -1,12 +1,15 @@
 var nedb        = require('nedb');
-var model       = null;
+var model       = new nedb({ filename: 'data/aethernauts/sessions.db', autoload: true });
 
-exports.connect = function (file)                                               {
-    model       = new nedb({ filename: file, autoload: true });
-    return model;
-}
+exports.get     = function(filter, handleResult)                                {
+    if (model) model.findOne(filter, handleResult);
+};
 
-exports.save = function(token, user, open)                                      {
+exports.list    = function(filter, handleResult)                                {
+    if (model) model.find(filter, handleResult);
+};
+
+exports.save = function(token, user, open, handleResult)                        {
     var response    = { onSuccess: null, onError: null, error:null, session:null};
     //
     model.findOne({ token: token, open: true }, function (err, session)         {
@@ -19,12 +22,18 @@ exports.save = function(token, user, open)                                      
                 function (err, affectedSessions, newSession)                    {
                     response.error      = err || null;
                     response.session    = newSession || response.session;
-                    if (response.error && response.onError) response.onError(response.error);
-                    else if (!response.error && response.onSuccess) response.onSuccess(response.session);
+                    if (response.error)                                         {
+                        if (handleResult) handleResult(err, null);
+                        if (response.onError) response.onError(response.error);
+                    } else if (!response.error)                                 {
+                        if (handleResult) handleResult(err, null);
+                        if (response.onSuccess) response.onSuccess(response.session);
+                    }
                 }
             );
         } else {
             response.error      = err;
+            if (handleResult) handleResult(err, null);
             if (response.onError) response.onError(err);
         }
     });

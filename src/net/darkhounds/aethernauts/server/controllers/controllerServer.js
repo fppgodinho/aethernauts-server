@@ -1,21 +1,29 @@
 var ws          = require('ws').Server;
 var crypto      = require('crypto');
+var clients     = [];
+
+exports.checkClientByToken = function (token)                                   {
+    for (var i in clients)                                                      {
+        var client = clients[i];
+        if (client.token == token) return client.readyState == client.OPEN;
+    }
+    return false;
+};
 
 exports.connect = function (config, handleClientConnect, handleClientMessage, handleClientDisconnect) {
     var port    = (config && config.port)?config.port:8080;
     var name    = (config && config.name)?config.name:'aethernauts@localhost';
-    var clients = [];
     var server  = new ws({port: port});
     
     server.on('connection', function(client)                                    {
         client.on('message', function(message)                                  {
             message             = JSON.parse(message);
-            var reponse         = handleClientMessage?(handleClientMessage(client, message) || {}):{};
-            reponse.callbackID  = message.callbackID;
-            reponse.type        = 'response';
-            if (reponse.error || reponse.result) client.send(JSON.stringify(reponse));
-            else reponse.onResult = reponse.onError = function ()               {
-                if (client.readyState == client.OPEN) client.send(JSON.stringify(reponse));
+            var response        = handleClientMessage?(handleClientMessage(client, message) || {}):{};
+            response.callbackID = message.callbackID;
+            response.type       = 'response';
+            if (response.error || response.result) client.send(JSON.stringify(response));
+            else response.onResult = response.onError = function ()             {
+                if (client.readyState == client.OPEN) client.send(JSON.stringify(response));
             };
         });
 

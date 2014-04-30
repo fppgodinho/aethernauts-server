@@ -1,16 +1,15 @@
 var nedb        = require('nedb');
-var model       = null;
-
-exports.connect = function (file)                                               {
-    model       = new nedb({ filename: file, autoload: true });
-    return model;
-};
+var model       = new nedb({ filename: 'data/aethernauts/users.db', autoload: true });
 
 exports.get     = function(filter, handleResult)                                {
     if (model) model.findOne(filter, handleResult);
 };
 
-exports.save    = function(type, username, password, firstName, lastName, emails, phones, addresses) {
+exports.list    = function(filter, handleResult)                                {
+    if (model) model.find(filter, handleResult);
+};
+
+exports.save    = function(type, username, password, firstName, lastName, emails, phones, addresses, handleResult) {
     if (!model) return;
     var response                        = { onSuccess: null, onError: null, error:null, user:null};
     //
@@ -21,12 +20,19 @@ exports.save    = function(type, username, password, firstName, lastName, emails
                 function (err, affectedUsers, newUser)                          {
                     response.error      = err || null;
                     response.user       = newUser || response.user;
-                    if (response.error && response.onError) response.onError(response.error);
-                    else if (!response.error && response.onSuccess) response.onSuccess(response.user);
+                    //
+                    if (response.error)                                         {
+                        if (handleResult) handleResult(err, null);
+                        if (response.onError) response.onError(response.error);
+                    } else if (!response.error)                                 {
+                        if (handleResult) handleResult(null, newUser);
+                        if (response.onSuccess) response.onSuccess(response.user);
+                    }
                 }
             );
         } else {
             response.error              = err;
+            if (handleResult) handleResult(err, null);
             if (response.onError) response.onError(err);
         }
     });
