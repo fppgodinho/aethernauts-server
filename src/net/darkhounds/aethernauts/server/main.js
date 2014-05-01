@@ -2,6 +2,7 @@ var serverCfg       = require('./config/confServer.js');
 var sessionsModel   = require('./models/modelSessions.js');
 var serverCtrl      = require('./controllers/controllerServer.js');
 var authCtrl        = require('./controllers/controllerAuth.js');
+var charactersCtrl  = require('./controllers/controllerCharacters.js');
 
 
 serverCtrl.connect(serverCfg,
@@ -11,13 +12,12 @@ serverCtrl.connect(serverCfg,
         console.log(client.upgradeReq.connection.remoteAddress + ' has connected!');
     },
     // Client Message recieved:
-    function(client, message)                                                   {
+    function(client, request)                                                   {
         var response    = {onResult: null, onError: null, error: null, result: null};
-        switch(message.type)                                                    {
-            case 'register':    authCtrl.register(client.token, response, message); break;
-            case 'login':       authCtrl.login(client.token, response, message);    break;
-            case 'logout':      authCtrl.logout(client.token, response);            break;
-            default:        break;
+        switch(request.type)                                                    {
+            case 'auth':        authCtrl.handleRequest(client.token, response, request);        break;
+            case 'characters':  charactersCtrl.handleRequest(client.token, response, request);  break;
+            default:            response.error = 'Request type unknown'; break;
         }
         return response;
     },

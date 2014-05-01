@@ -10,7 +10,16 @@ function hashPassword(password)                                                 
 var sessionsModel   = require('../models/modelSessions.js');
 var usersModel      = require('../models/modelUsers.js');
 
-exports.register = function(token, response, request)                           {
+exports.handleRequest   = function(token, response, request)                    {
+    switch(request.action)                                                      {
+        case 'register':    exports.register(token, response, request); break;
+        case 'login':       exports.login(token, response, request);    break;
+        case 'logout':      exports.logout(token, response);            break;
+        default:            break;
+    }
+};
+
+exports.register        = function(token, response, request)                    {
     usersModel.get({ "credentials.username": request.username }, function (err, user){
         if (err) response.error         = errorsCfg['DBError'];
         else if (user) response.error   = errorsCfg['AuthUsernameReserved'];
@@ -22,6 +31,7 @@ exports.register = function(token, response, request)                           
                     if (err) response.error = errorsCfg['DBError'];
                     else                                                        {
                         sessionsModel.save(token, user, true);
+                        delete user.credentials.password;
                         response.result          = user;
                     }
                     //
@@ -35,7 +45,7 @@ exports.register = function(token, response, request)                           
     });
 };
 
-exports.login = function(token, response, request)                              {
+exports.login           = function(token, response, request)                    {
     usersModel.get({ "credentials.username": request.username }, function (err, user){
         if (err) response.error         = errorsCfg['DBError'];
         else if (!user) response.error  = errorsCfg['AuthError'];
@@ -72,7 +82,7 @@ exports.login = function(token, response, request)                              
     });
 };
 
-exports.logout = function(token, response)                                      {
+exports.logout          = function(token, response)                             {
     sessionsModel.get({token: token}, function(err, session)                    {
         if (err || !session) response.error  = errorsCfg['DBError'];
         else sessionsModel.save(token, null, true);
