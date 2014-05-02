@@ -1,90 +1,76 @@
-var errorsCfg       = require('../config/confErrors.js');
-var sessionsModel   = require('../models/modelSessions.js');
-var usersModel      = require('../models/modelUsers.js');
-var charactersModel = require('../models/modelCharacters.js');
+var EventEmitter    = require( "events" ).EventEmitter;
+var Response        = require(process.src + 'net/darkhounds/core/server/response.js');
+var errorsCfg       = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
+var ModelSessions   = require(process.src + 'net/darkhounds/aethernauts/server/models/modelSessions.js');
+var ModelUsers      = require(process.src + 'net/darkhounds/aethernauts/server/models/modelUsers.js');
+var ModelCharacters = require(process.src + 'net/darkhounds/aethernauts/server/models/modelCharacters.js');
 
-exports.handleRequest   = function(token, response, request)                    {
-    switch(request.action)                                                      {
-        case 'list':    exports.list(token, response, request);     break;
-        case 'create':  exports.create(token, response, request);   break;
-        case 'deleted': exports.delete(token, response, request);     break;
-        default:        break;
-    }
-};
-
-exports.list            = function(token, response, request)                    {
-    sessionsModel.get({token: token}, function (err, session)                   {
-        if (err) response.error                 = errorsCfg['DBError'];
-        else if (!session) response.error       = errorsCfg['DBNoSession'];
-        else if (!session.open) response.error  = errorsCfg['DBInvalidSession'];
-        else if (!session.user) response.error  = errorsCfg['DBNotLogedin'];
-        else charactersModel.list({userid: session.user._id}, function(err, items){
-            if (err) response.error             = errorsCfg['DBError'];
-            else response.response              = items;
-            //
-            if (response.error && response.onError) response.onError(response.error, err);
-            else if (response.onResult) response.onResult(response.result);
-        });
-        //
-        if (response.error && response.onError) response.onError(response.error, err);
-    });
-};
-
-exports.create      = function(token, response, request)                        {
-    sessionsModel.get({token: token}, function (err, session)                   {
-        if (err) response.error                 = errorsCfg['DBError'];
-        else if (!session) response.error       = errorsCfg['DBNoSession'];
-        else if (!session.open) response.error  = errorsCfg['DBInvalidSession'];
-        else if (!session.user) response.error  = errorsCfg['DBNotLogedin'];
-        else                                                                    {
-            charactersModel.get({firstname: request.firstname, deleted: false}, function(err, existingCharacter){
-                if (err) response.error = errorsCfg['DBError'];
-                else if (existingCharacter) response.error = errorsCfg['CharacterNameReserved'];
-                else                                                            {
-                    var stats  = generateStats();
-                    charactersModel.save(session.user._id, request.firstname, request.lastname, stats[0], stats[1], stats[2], stats[3], stats[4], stats[5], 0, null,
-                        function(err, character)                                {
-                            if (err) response.error = errorsCfg['DBError'];
-                            else response.result    = character;
-                            //
-                            if (response.error && response.onError) response.onError(response.error, err);
-                            else if (response.onResult) response.onResult(response.result);
-                        }
-                    );
-                }
-                //
-                if (response.error && response.onError) response.onError(response.error, err);
-            });            
+var Characters      = function()                                                {
+    var characters              = new EventEmitter();
+    characters.handleRequest    = function(token, request, response)            {
+        switch(request.action)                                                  {
+            case 'list':        characters.list(token, request, response);                      break;
+            case 'create':      characters.create(token, request, response);                    break;
+            case 'delete':      characters.deleted(token, response, response);                  break;
+            default:            response.emit(Response.ERROR, errorsCfg.UnknownRequestType);    break;
         }
-        //
-        if (response.error && response.onError) response.onError(response.error, err);
-    });
-};
-
-exports.delete      = function(token, response, request)                        {
-    sessionsModel.get({token: token}, function (err, session)                   {
-        if (err) response.error                 = errorsCfg['DBError'];
-        else if (!session) response.error       = errorsCfg['DBNoSession'];
-        else if (!session.open) response.error  = errorsCfg['DBInvalidSession'];
-        else if (!session.user) response.error  = errorsCfg['DBNotLogedin'];
-        else charactersModel.get({_id: request._id, userid: session.user._id}, function(err, existingCharacter){
-            if (err) response.error = errorsCfg['DBError'];
-            else if (!existingCharacter) response.error = errorsCfg['InvalidCharacter'];
-            else charactersModel.delete(existingCharacter, function(err)        {
-                    if (err) response.error     = errorsCfg['DBError'];
-                    else response.result        = true;
-                    //
-                    if (response.error && response.onError) response.onError(response.error, err);
-                    else if (response.onResult) response.onResult(response.result);
+    };
+    
+    characters.list             = function(token, request, response)            {
+        ModelSessions.get({token: token}).on(ModelSessions.RESULT, function(event){
+            if (!event.item)            response.error  = errorsCfg.NoSession;
+            else if (!event.item.open)  response.error  = errorsCfg.InvalidSession;
+            else if (!event.item.user)  response.error  = errorsCfg.NotLogedin;
+            else ModelCharacters.list({userid: event.item.user._id}).on(ModelCharacters.RESULT,
+                function(event)                                                 {
+                    response.emit(Response.RESOLVED, event.items);
                 }
-            );
-            //
-            if (response.error && response.onError) response.onError(response.error, err);
-        });            
-        //
-        if (response.error && response.onError) response.onError(response.error, err);
-    });
+            ).on(ModelCharacters.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+        }).on(ModelSessions.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+    };
+    
+    characters.create           = function(token, request, response)            {
+        ModelSessions.get({token: token}).on(ModelSessions.RESULT, function(event){
+            var session     = event.item;
+            if (!session)               response.error  = errorsCfg.NoSession;
+            else if (!session.open)     response.error  = errorsCfg.InvalidSession;
+            else if (!session.user)     response.error  = errorsCfg.NotLogedin;
+            else ModelCharacters.get({'identity.name.first': request.firstname}).on(ModelCharacters.RESULT,
+                function(event)                                                 {
+                    if (event.item) response.emit(Response.ERROR, errorsCfg.CharacterNameReserved);
+                    else                                                        {
+                        var stats  = generateStats();
+                        ModelCharacters.save({
+                            userid:     session.user._id,
+                            identity:   { name:{first:request.firstname, last:request.lastname} },
+                            stats:      { int: stats[0], wiz: stats[1], str: stats[2], agi: stats[3], sta: stats[4], luck: stats[5] }
+                        }).on(ModelCharacters.RESULT, function(event) { console.log(event); response.emit(Response.RESOLVED, event.item);
+                        }).on(ModelCharacters.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+                    }
+                }
+            ).on(ModelCharacters.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+        }).on(ModelSessions.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+    };
+    
+    characters.delete           = function(token, request, response)            {
+        ModelSessions.get({token: token}).on(ModelSessions.RESULT, function(event){
+            if (!event.item)            response.error  = errorsCfg.NoSession;
+            else if (!event.item.open)  response.error  = errorsCfg.InvalidSession;
+            else if (!event.item.user)  response.error  = errorsCfg.NotLogedin;
+            else ModelCharacters.get({'identity.name.first': request.firstname}).on(ModelCharacters.RESULT,
+                function(event)                                                 {
+                    if (!event.item) response.emit(Response.ERROR, errorsCfg.InvalidCharacter);
+                    else ModelCharacters.delete(event.item).on(ModelCharacters.RESULT, function(event) {
+                        response.emit(Response.RESOLVED);
+                    }).on(ModelCharacters.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+                }
+            ).on(ModelCharacters.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+        }).on(ModelSessions.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+    };
+    
+    return characters;
 };
+module.exports      = Characters;
 
 function generateStats()                                                        {
     var min     = 2;

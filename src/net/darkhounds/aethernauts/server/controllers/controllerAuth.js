@@ -1,97 +1,104 @@
-var serverCfg       = require('../config/confServer.js');
-var errorsCfg       = require('../config/confErrors.js');
-var serverCtrl      = require('./controllerServer.js');
-
 var crypto          = require('crypto');
+var EventEmitter    = require( "events" ).EventEmitter;
+var Response        = require(process.src + 'net/darkhounds/core/server/response.js');
+var serverCfg       = require(process.src + 'net/darkhounds/aethernauts/server/config/confServer.js');
+var errorsCfg       = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
+var ModelSessions   = require(process.src + 'net/darkhounds/aethernauts/server/models/modelSessions.js');
+var ModelUsers      = require(process.src + 'net/darkhounds/aethernauts/server/models/modelUsers.js');
+
 function hashPassword(password)                                                 {
     return crypto.createHash('md5').update(password).digest('hex');
 }
 
-var sessionsModel   = require('../models/modelSessions.js');
-var usersModel      = require('../models/modelUsers.js');
-
-exports.handleRequest   = function(token, response, request)                    {
-    switch(request.action)                                                      {
-        case 'register':    exports.register(token, response, request); break;
-        case 'login':       exports.login(token, response, request);    break;
-        case 'logout':      exports.logout(token, response);            break;
-        default:            break;
-    }
-};
-
-exports.register        = function(token, response, request)                    {
-    usersModel.get({ "credentials.username": request.username }, function (err, user){
-        if (err) response.error         = errorsCfg['DBError'];
-        else if (user) response.error   = errorsCfg['AuthUsernameReserved'];
-        else                                                                    {
-            // TODO: Validate fields;
-            // type, username, password, firstName, lastName, emails, phones, addresses
-            usersModel.save('user', request.username, request.password, request.nameFirst, request.nameLast, [{address: request.email, 'default': true}], null, null,
-                function(err, user)                                             {
-                    if (err) response.error = errorsCfg['DBError'];
-                    else                                                        {
-                        sessionsModel.save(token, user, true);
-                        delete user.credentials.password;
-                        response.result          = user;
-                    }
-                    //
-                    if (response.error && response.onError) response.onError(response.error, err);
-                    else if (response.onResult) response.onResult(response.result);
+var Auth            = function()                                                {
+    var auth            = new EventEmitter();
+    auth.handleRequest  = function(token, request, response)                    {
+        switch(request.action)                                                  {
+            case 'register':    auth.register(token, request, response);                        break;
+            case 'login':       auth.login(token, request, response);                           break;
+            case 'logout':      auth.logout(token, response, response);                         break;
+            default:            response.emit(Response.ERROR, errorsCfg.UnknownRequestType);    break;
+        }
+    };
+    
+    auth.register       = function(token, request, response)                    {
+        ModelUsers.get({ "credentials.username": request.username }).on(ModelUsers.RESULT,
+            function(event)                                                     {
+                if (event.item) response.emit(Response.ERROR, errorsCfg.AuthUsernameReserved);
+                else {
+                    ModelUsers.save({
+                        type:           'user',
+                        credentials:    {username: request.username, password: request.password},
+                        identity:       {
+                            name:           {first: request.firstname, last: request.lastname},
+                            addresses:      [{address: request.email, 'default': true}]
+                        }
+                    }).on(ModelUsers.RESULT, function(event)                    {
+                        ModelSessions.save({token: token, user: event.item.user, open: true});
+                        delete event.item.credentials.password;
+                        response.emit(Response.RESOLVED, event.item);
+                    }).on(ModelUsers.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
                 }
-            );
-        }
-        //
-        if (response.error && response.onError) response.onError(response.error, err);
-    });
-};
-
-exports.login           = function(token, response, request)                    {
-    usersModel.get({ "credentials.username": request.username }, function (err, user){
-        if (err) response.error         = errorsCfg['DBError'];
-        else if (!user) response.error  = errorsCfg['AuthError'];
-        else                                                                    {
-            var password                = hashPassword(user.credentials.password + token);
-            delete user.credentials.password;
-            if (request.password != password) response.error  = errorsCfg['AuthError'];
-            else                                                                {
-                sessionsModel.list({'user.credentials.username': request.username, open: true}, function(err, items) {
-                    if (err) response.error             = errorsCfg['DBError'];
-                    else if (items && items.length)                             {
-                        var i = 0;
-                        while (i < items.length)                                {
-                            var session = items[i];
-                            if (!serverCtrl.checkClientByToken(session.token))  {
-                                sessionsModel.save(session.token, null, false);
-                                items.splice(i, 1);
-                            } else i++;
-                        } 
-                        if (items.length) response.error    = errorsCfg['AuthLogedin'];
-                    } 
-                    
-                    if (!items || !items.length) response.result          = user;
-                    //
-                    if (!response.error)                                        {
-                        sessionsModel.save(token, user, true);
-                        if (response.onResult) response.onResult(response.result);
-                    } else if (response.onError) response.onError(response.error, err);
-                });
             }
+        ).on(ModelUsers.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+    };
+    
+    auth.login          = function(token, request, response)                    {
+        ModelUsers.get({ "credentials.username": request.username }).on(ModelUsers.RESULT,
+            function(event)                                                     {
+                if (!event.item) response.emit(Response.ERROR, errorsCfg.AuthError);
+                else                                                            {
+                    var user        = event.item;
+                    var password    = hashPassword(user.credentials.password + token);
+                    delete user.credentials.password;
+                    if (request.password != password) response.emit(Response.ERROR, errorsCfg.AuthError);
+                    else ModelSessions.list({'user.credentials.username': request.username, open: true}).on(ModelUsers.RESULT,
+                        function(event)                                         {
+                            if (event.items && event.items.length)              {
+                                var i = 0;
+                                while (i < event.items.length)                  {
+                                    var session = event.items[i];
+                                    if (!process.server.checkClientByToken(session.token))  {
+                                        ModelSessions.save({token: session.token, user: null, open: false});
+                                        event.items.splice(i, 1);
+                                    } else i++;
+                                } 
+                            } 
+                            //
+                            if (!event.items || !event.items.length)            {
+                                ModelSessions.save({token: token, user: user, open: true});
+                                response.emit(Response.RESOLVED, user);
+                            } else response.emit(Response.ERROR, errorsCfg.AuthLogedin);
+                        }
+                    ).on(ModelUsers.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+                }
+            }
+        ).on(ModelUsers.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+    };
+    
+    auth.logout         = function(token, request, response)                    {
+        ModelSessions.get({token: token}).on(ModelUsers.RESULT,
+            function(event)                                                     {
+                if (!event.item) response.emit(Response.ERROR, errorsCfg.NotLogedin);
+                else                                                            {
+                    response.emit(Response.RESOLVED);
+                    ModelSessions.save({token: token, user: null, open: true});
+                }
+            }
+        ).on(ModelUsers.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
+    };
+    
+    return auth;
+};
+module.exports      = Auth;
+
+ModelUsers.get({ "credentials.username": 'admin' }).on(ModelUsers.RESULT, function(event){
+    if (!event.item) ModelUsers.save({
+        type:           'admin',
+        credentials:    {username: 'admin', password: hashPassword('teste' + '_' + serverCfg.salt)},
+        identity:       {
+            name:           {first: 'Server', last: 'Admin'},
+            addresses:      [{address: 'admin@darkhounds.net', 'default': true}]
         }
-        //
-        if (response.error && response.onError) response.onError(response.error, err);
     });
-};
-
-exports.logout          = function(token, response)                             {
-    sessionsModel.get({token: token}, function(err, session)                    {
-        if (err || !session) response.error  = errorsCfg['DBError'];
-        else sessionsModel.save(token, null, true);
-        
-        if (response.error && response.onError) response.onError(response.error, err);
-        else if (response.onResult) response.onResult();
-    });
-};
-
-usersModel.get({ "credentials.username": 'admin' }, function (err, user)        {
-    if (!err && !user) usersModel.save('admin', 'admin', hashPassword('teste' + '_' + serverCfg.salt), 'Server', 'Admin', [{address: 'admin@darkhounds.net', 'default': true}]);
 });

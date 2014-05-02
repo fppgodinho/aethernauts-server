@@ -1,59 +1,62 @@
-var nedb        = require('nedb');
-var model       = new nedb({ filename: 'data/aethernauts/users.db', autoload: true });
-
-exports.get     = function(filter, handleResult)                                {
-    if (model) model.findOne(filter, handleResult);
+var EventEmitter    = require( "events" ).EventEmitter;
+var errorsCfg       = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
+var nedb            = require('nedb');
+var model           = new nedb({ filename: 'data/aethernauts/users.db', autoload: true });
+//
+var ModelUsers      = {};
+ModelUsers.ERROR    = 'modelError';
+ModelUsers.RESULT   = 'modelResult';
+ModelUsers.get      = function(filter)                                      {
+    var response            = new EventEmitter();
+    if (!model) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+    else model.findOne(filter, function(error, item)                            {
+        if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+        else response.emit(ModelUsers.RESULT, {item: item});
+    });
+    return response;
 };
-
-exports.list    = function(filter, handleResult)                                {
-    if (model) model.find(filter, handleResult);
+ModelUsers.list     = function(filter)                                          {
+    var response            = new EventEmitter();
+    if (!model) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+    else model.find(filter, function(error, items)                              {
+        if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+        else response.emit(ModelUsers.RESULT, {items: items});
+    });
+    return response;
 };
-
-exports.save    = function(type, username, password, firstName, lastName, emails, phones, addresses, handleResult) {
-    if (!model) return;
-    var response                        = { onSuccess: null, onError: null, error:null, user:null};
-    //
-    model.findOne({ "credentials.username": username }, function (err, user)  {
-        if (!err)                                                               {
-            response.user               = update(user, type, username, password, firstName, lastName, emails, phones, addresses);
-            model.update({ "credentials.username": username}, response.user, {upsert: true},
-                function (err, affectedUsers, newUser)                          {
-                    response.error      = err || null;
-                    response.user       = newUser || response.user;
-                    //
-                    if (response.error)                                         {
-                        if (handleResult) handleResult(err, null);
-                        if (response.onError) response.onError(response.error);
-                    } else if (!response.error)                                 {
-                        if (handleResult) handleResult(null, newUser);
-                        if (response.onSuccess) response.onSuccess(response.user);
-                    }
+ModelUsers.save     = function(data)                                            {
+    var response        = new EventEmitter();
+    if (!model) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+    else model.findOne({ "credentials.username": data.username }, function (error, item) {
+        if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+        else                                                                    {
+            data            = update(item, data);
+            model.update({ "credentials.username": data.username}, data, {upsert: true},
+                function (error, affectedItems, newItem)                        {
+                    if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
+                    else response.emit(ModelUsers.RESULT, {item: newItem});
                 }
             );
-        } else {
-            response.error              = err;
-            if (handleResult) handleResult(err, null);
-            if (response.onError) response.onError(err);
         }
     });
-    //
-    return response; 
+    return response;
 };
-
-function update(user, type, username, password, firstName, lastName, emails, phones, addresses) {
-    var now         = new Date();
-    var user        = user || { created: now };
-    user.type       = type;
-    user.modified   = now;
-    user.credentials = {
-        username:       username,
-        password:       password
+module.exports      = ModelUsers;
+//
+function update(item, data)                                                     {
+    data                = data || { credentials:{}, identity:{ name:{} } };
+    item                = item || { created:new Date() };
+    item.modified       = new Date();
+    item.type           = data.type;
+    item.credentials    = {
+        username:       data.credentials.username,
+        password:       data.credentials.password
     };
-    user.identity    = {
-        name:           { first:  firstName, last:   lastName },
-        emails:         emails || [],
-        phones:         phones || [],
-        addresses:      addresses || []
+    item.identity       = {
+        name:           { first:  data.identity.name.first, last:   data.identity.name.last },
+        emails:         data.identity.emails || [],
+        phones:         data.identity.phones || [],
+        addresses:      data.identity.addresses || []
     };
-    return user;
+    return item;
 }

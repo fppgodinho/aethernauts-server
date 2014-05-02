@@ -1,30 +1,33 @@
-var serverCfg       = require('./config/confServer.js');
-var sessionsModel   = require('./models/modelSessions.js');
-var serverCtrl      = require('./controllers/controllerServer.js');
-var authCtrl        = require('./controllers/controllerAuth.js');
-var charactersCtrl  = require('./controllers/controllerCharacters.js');
+process.src = __dirname + '/src/';
 
+var serverCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confServer.js');
+var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
+var ModelSessions       = require(process.src + 'net/darkhounds/aethernauts/server/models/modelSessions.js');
+var ControllerServer    = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerServer.js');
+var Auth                = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerAuth.js');
+var Characters          = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerCharacters.js');
 
-serverCtrl.connect(serverCfg,
-    // Client Connected:
-    function(client)                                                            {
-        sessionsModel.save(client.token, null, true);
-        console.log(client.upgradeReq.connection.remoteAddress + ' has connected!');
-    },
-    // Client Message recieved:
-    function(client, request)                                                   {
-        var response    = {onResult: null, onError: null, error: null, result: null};
-        switch(request.type)                                                    {
-            case 'auth':        authCtrl.handleRequest(client.token, response, request);        break;
-            case 'characters':  charactersCtrl.handleRequest(client.token, response, request);  break;
-            default:            response.error = 'Request type unknown'; break;
-        }
-        return response;
-    },
-    // Client Disconnected:
-    function(client)                                                            {
-        if (client.token) sessionsModel.save(client.token, null, false);
-    }
-);
-
-console.log("Server's running...");
+var charactersCtrl      = new Characters();
+var authCtrl            = new Auth();
+var serverCtrl          = new ControllerServer();
+serverCtrl.on(ControllerServer.CONNECTED, function()                            {
+    console.log("Server's running...");
+});
+serverCtrl.on(ControllerServer.CLIENT_CONNECTED, function(event)                {
+    ModelSessions.save({token: event.client.token, user: null, open: true});
+    console.log(event.client.ip + ' has connected!');
+});
+serverCtrl.on(ControllerServer.CLIENT_MESSAGE, function(event)                  {
+    if (event.request) switch(event.request.type)                               {
+        case 'auth':        authCtrl.handleRequest(event.client.token, event.request, event.response);          break;
+        case 'characters':  charactersCtrl.handleRequest(event.client.token, event.request, event.response);    break;
+        default:            event.response.setError(errorsCfg.UnknownRequestType);                              break;
+    } else event.response.setError(errorsCfg.UnknownProtocol);
+});
+serverCtrl.on(ControllerServer.CLIENT_DISCONNECTED, function(event)             {
+    if (event.client.token) ModelSessions.save(event.client.token, null, false);
+    console.log(event.client.ip + ' has disconnected!');
+});
+serverCtrl.connect(serverCfg);
+//
+process.server  = serverCtrl;

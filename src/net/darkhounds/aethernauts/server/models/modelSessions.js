@@ -1,50 +1,55 @@
-var nedb        = require('nedb');
-var model       = new nedb({ filename: 'data/aethernauts/sessions.db', autoload: true });
-
-exports.get     = function(filter, handleResult)                                {
-    if (model) model.findOne(filter, handleResult);
+var EventEmitter        = require( "events" ).EventEmitter;
+var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
+var nedb                = require('nedb');
+var model               = new nedb({ filename: 'data/aethernauts/sessions.db', autoload: true });
+//
+var ModelSessions       = {};
+ModelSessions.ERROR     = 'modelError';
+ModelSessions.RESULT    = 'modelResult';
+ModelSessions.get       = function(filter)                                      {
+    var response            = new EventEmitter();
+    if (!model) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+    else model.findOne(filter, function(error, item)                            {
+        if (error) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+        else response.emit(ModelSessions.RESULT, {item: item});
+    });
+    return response;
 };
-
-exports.list    = function(filter, handleResult)                                {
-    if (model) model.find(filter, handleResult);
+ModelSessions.list      = function(filter)                                      {
+    var response            = new EventEmitter();
+    if (!model) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+    else model.find(filter, function(error, items)                              {
+        if (error) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+        else response.emit(ModelSessions.RESULT, {items: items});
+    });
+    return response;
 };
-
-exports.save = function(token, user, open, handleResult)                        {
-    var response    = { onSuccess: null, onError: null, error:null, session:null};
-    //
-    model.findOne({ token: token, open: true }, function (err, session)         {
-        if (!err)                                                               {
-            var now                     = new Date();
-            response.session            = update(session, token, user, open);
-            if (session) response.session.log.push({message:open?'update':'close', date:now, user:user});
-            //
-            model.update({ token: token, open: true }, response.session, {upsert: true},
-                function (err, affectedSessions, newSession)                    {
-                    response.error      = err || null;
-                    response.session    = newSession || response.session;
-                    if (response.error)                                         {
-                        if (handleResult) handleResult(err, null);
-                        if (response.onError) response.onError(response.error);
-                    } else if (!response.error)                                 {
-                        if (handleResult) handleResult(err, null);
-                        if (response.onSuccess) response.onSuccess(response.session);
-                    }
+ModelSessions.save      = function(data)                                        {
+    var response            = new EventEmitter();
+    if (!model) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+    else model.findOne({ token: data.token, open: true }, function (error, item){
+        if (error) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+        else                                                                    {
+            var now         = new Date();
+            data            = update(item, data);
+            if (item) data.log.push({message:data.open?'update':'close', date:now, user:data.user});
+            model.update({ token: data.token, open: true }, data, {upsert: true},
+                function (error, affectedItems, newItem)                        {
+                    if (error) response.emit(ModelSessions.ERROR, {error: errorsCfg.DBError});
+                    else response.emit(ModelSessions.RESULT, {item: newItem});
                 }
             );
-        } else {
-            response.error      = err;
-            if (handleResult) handleResult(err, null);
-            if (response.onError) response.onError(err);
         }
     });
-    //
-    return response; 
+    return response;
 };
-
-function update(session, token, user, open)                              {
-    var now         = new Date();
-    var session     = session || { token:token, created: now, log: [{message: 'opened', date:now}], open: true };
-    session.user    = user;
-    session.open    = open;
-    return session;
+module.exports      = ModelSessions;
+//
+function update(item, data)                                                     {
+    data            = data || {};
+    item            = item || { token:data.token, created: new Date(), log: [{message: 'opened', date:new Date()}], open: true };
+    item.modified   = new Date();
+    item.user       = data.user;
+    item.open       = data.open;
+    return item;
 }

@@ -2,7 +2,7 @@
   "name": "aethernaut-server",
   "version": "0.0.1",
   "description": "An open-source game server project based on Node.js and Websockets technology inspired on steam-punk and space flight",
-  "main": "src/net/darkhounds/aethernauts/server/main.js",
+  "main": "main.js",
   "dependencies": {
     "grunt": "~0.4.4",
     "ws": "^0.4.31",
@@ -13,7 +13,7 @@
     "grunt-execute": "^0.2.1"
   },
   "scripts": {
-    "start": "node src/net/darkhounds/aethernauts/server/main.js",
+    "start": "node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
