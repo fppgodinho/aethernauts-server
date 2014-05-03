@@ -11,7 +11,7 @@ var Characters      = function()                                                
         switch(request.action)                                                  {
             case 'list':        characters.list(token, request, response);                      break;
             case 'create':      characters.create(token, request, response);                    break;
-            case 'delete':      characters.deleted(token, response, response);                  break;
+            case 'delete':      characters.delete(token, request, response);                   break;
             default:            response.emit(Response.ERROR, errorsCfg.UnknownRequestType);    break;
         }
     };
@@ -21,7 +21,7 @@ var Characters      = function()                                                
             if (!event.item)            response.error  = errorsCfg.NoSession;
             else if (!event.item.open)  response.error  = errorsCfg.InvalidSession;
             else if (!event.item.user)  response.error  = errorsCfg.NotLogedin;
-            else ModelCharacters.list({userid: event.item.user._id}).on(ModelCharacters.RESULT,
+            else ModelCharacters.list({userid: event.item.user._id, deleted: false}).on(ModelCharacters.RESULT,
                 function(event)                                                 {
                     response.emit(Response.RESOLVED, event.items);
                 }
@@ -35,7 +35,7 @@ var Characters      = function()                                                
             if (!session)               response.error  = errorsCfg.NoSession;
             else if (!session.open)     response.error  = errorsCfg.InvalidSession;
             else if (!session.user)     response.error  = errorsCfg.NotLogedin;
-            else ModelCharacters.get({'identity.name.first': request.firstname}).on(ModelCharacters.RESULT,
+            else ModelCharacters.get({'identity.name.first': request.firstname, deleted: false}).on(ModelCharacters.RESULT,
                 function(event)                                                 {
                     if (event.item) response.emit(Response.ERROR, errorsCfg.CharacterNameReserved);
                     else                                                        {
@@ -44,7 +44,7 @@ var Characters      = function()                                                
                             userid:     session.user._id,
                             identity:   { name:{first:request.firstname, last:request.lastname} },
                             stats:      { int: stats[0], wiz: stats[1], str: stats[2], agi: stats[3], sta: stats[4], luck: stats[5] }
-                        }).on(ModelCharacters.RESULT, function(event) { console.log(event); response.emit(Response.RESOLVED, event.item);
+                        }).on(ModelCharacters.RESULT, function(event) { response.emit(Response.RESOLVED, event.item);
                         }).on(ModelCharacters.ERROR, function(event) { response.emit(Response.ERROR, event.error); });
                     }
                 }
@@ -57,7 +57,7 @@ var Characters      = function()                                                
             if (!event.item)            response.error  = errorsCfg.NoSession;
             else if (!event.item.open)  response.error  = errorsCfg.InvalidSession;
             else if (!event.item.user)  response.error  = errorsCfg.NotLogedin;
-            else ModelCharacters.get({'identity.name.first': request.firstname}).on(ModelCharacters.RESULT,
+            else ModelCharacters.get({'identity.name.first': request.character.identity.name.first, deleted: false}).on(ModelCharacters.RESULT,
                 function(event)                                                 {
                     if (!event.item) response.emit(Response.ERROR, errorsCfg.InvalidCharacter);
                     else ModelCharacters.delete(event.item).on(ModelCharacters.RESULT, function(event) {

@@ -44,7 +44,7 @@ ModelCharacters.save    = function(data)                                        
 ModelCharacters.delete  = function(data)                                        {
     var response            = new EventEmitter();
     if (!model) response.emit(ModelCharacters.ERROR, {error: errorsCfg.DBError});
-    else model.findOne({ firstname: data._id }, function (error, item)          {
+    else model.findOne({ _id: data._id }, function (error, item)          {
         if (error) response.emit(ModelCharacters.ERROR, {error: errorsCfg.DBError});
         else if (!item) response.emit(ModelCharacters.ERROR, {error: errorsCfg.InvalidCharacter});
         else                                                                    {
