@@ -12,7 +12,6 @@
     "ws": "^0.4.31",
     "nedb": "^0.10.5"
   },
-  "-node-main": "main.js",
   "author": "Fernando Pedro Pereira Godinho <fppgodinho@gmail.com>",
   "license": "MIT",
   "engines": {
