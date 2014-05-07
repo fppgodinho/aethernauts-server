@@ -2,32 +2,17 @@
   "name": "aethernaut-server",
   "version": "0.0.1",
   "description": "An open-source game server project based on Node.js and Websockets technology inspired on steam-punk and space flight",
-  "main": "main.js",
+  "main": "public/index.html",
+  "window": {
+    "toolbar":  true,
+    "width":    800,
+    "height":   600
+  } ,
   "dependencies": {
     "ws": "^0.4.31",
     "nedb": "^0.10.5"
   },
-  "devDependencies": {
-    "grunt": "^0.4.4",
-    "grunt-execute": "^0.2.1",
-    "grunt-node-webkit-builder": "^0.1.21",
-    "grunt-contrib-copy": "^0.5.0",
-    "grunt-contrib-clean": "^0.5.0"
-  },
-  "scripts": {
-    "start": "node main.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/fppgodinho/aethernaut-server.git"
-  },
-  "keywords": [
-    "game",
-    "server",
-    "websocket",
-    "node.js"
-  ],
+  "-node-main": "main.js",
   "author": "Fernando Pedro Pereira Godinho <fppgodinho@gmail.com>",
   "license": "MIT",
   "engines": {

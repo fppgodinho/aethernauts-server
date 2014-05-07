@@ -1,7 +1,7 @@
 var EventEmitter        = require( "events" ).EventEmitter;
 var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
 var nedb                = require('nedb');
-var model               = new nedb({ filename: 'data/aethernauts/sessions.db', autoload: true });
+var model               = new nedb({ filename: process.data + 'data/sessions.db', autoload: true });
 //
 var ModelSessions       = {};
 ModelSessions.ERROR     = 'modelError';

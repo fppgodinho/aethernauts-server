@@ -1,4 +1,8 @@
-process.src = __dirname + '/src/';
+var path        = require('path');
+process.src     = __dirname + '/src/';
+process.webkit  = process.versions?(process.versions['node-webkit'] || false):false;
+process.data    = (process.webkit?path.dirname( process.execPath ):process.cwd())+'/';
+console.log('-->', process.webkit, process.data);
 
 var serverCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confServer.js');
 var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
