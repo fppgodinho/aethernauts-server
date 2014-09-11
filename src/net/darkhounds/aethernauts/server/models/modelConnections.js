@@ -6,8 +6,12 @@ module.exports              = {};
 module.exports.schema       = function()                                        {
     Schema.apply(this, arguments);
     this.add({
-        name:       String,
-        continent:  Schema.Types.ObjectId
+        dir:    String,
+        x:      String,
+        y:      String,
+        z:      String,
+        source: { type: Schema.Types.ObjectId, ref: 'Rooms' },
+        target: { type: Schema.Types.ObjectId, ref: 'Rooms' }
     });
 
     this.statics.create = function(data)                                        {
@@ -22,4 +26,4 @@ module.exports.schema       = function()                                        
 };
 util.inherits(module.exports.schema, Schema);
 
-module.exports.instance                     = mongoose.model("Regions", new module.exports.schema());
+module.exports.instance                     = mongoose.model("Connections", new module.exports.schema());

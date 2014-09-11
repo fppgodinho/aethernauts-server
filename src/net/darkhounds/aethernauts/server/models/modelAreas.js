@@ -6,8 +6,8 @@ module.exports              = {};
 module.exports.schema       = function()                                        {
     Schema.apply(this, arguments);
     this.add({
-        name:    String,
-        region:  Schema.Types.ObjectId
+        name:   String,
+        region: { type: Schema.Types.ObjectId, ref: 'Regions' }
     });
 
     this.statics.create = function(data)                                        {

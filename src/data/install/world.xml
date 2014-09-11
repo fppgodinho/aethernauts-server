@@ -1,0 +1,38 @@
+<world>
+    <name>Nod</name>
+    <continent>
+        <name>Iceania</name>
+        <region>
+            <name>White Boulders</name>
+            <area>
+                <name>White Nest</name>
+                <room x="0" y="0" z="0">
+                    <name>Town Square</name>
+                    <connection dir="town hall" x="0" y="1" z="0"/>
+                    <connection dir="north" x="0" y="-1" z="0"/>
+                    <connection dir="east" x="1" y="0" z="0"/>
+                    <connection dir="west" x="-1" y="0" z="0"/>
+                </room>
+                <room x="0" y="1" z="0">
+                    <name>Town Hall</name>
+                    <connection dir="out" x="0" y="0" z="0"/>
+                </room>
+                <room x="0" y="-1" z="0">
+                    <name>Town Merchants Lane</name>
+                    <connection dir="south" x="0" y="0" z="0"/>
+                </room>
+                <room x="1" y="0" z="0">
+                    <name>Tavern Ally</name>
+                    <connection dir="west" x="0" y="0" z="0"/>
+                </room>
+                <room x="-1" y="0" z="0">
+                    <name>Diamon Street</name>
+                    <connection dir="west" x="0" y="0" z="0"/>
+                </room>
+            </area>
+        </region>
+    </continent>
+    <continent>
+        <name>Etherness</name>
+    </continent>
+</world>
