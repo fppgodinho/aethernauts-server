@@ -1,62 +1,28 @@
-var EventEmitter    = require( "events" ).EventEmitter;
-var errorsCfg       = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
-var nedb            = require('nedb');
-var model           = new nedb({ filename: process.data + 'data/users.db', autoload: true });
-//
-var ModelUsers      = {};
-ModelUsers.ERROR    = 'modelError';
-ModelUsers.RESULT   = 'modelResult';
-ModelUsers.get      = function(filter)                                      {
-    var response            = new EventEmitter();
-    if (!model) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-    else model.findOne(filter, function(error, item)                            {
-        if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-        else response.emit(ModelUsers.RESULT, {item: item});
+var util                    = require('util');
+var mongoose                = require('mongoose');
+var Schema                  = mongoose.Schema;
+
+module.exports              = {};
+module.exports.schema       = function()                                        {
+    Schema.apply(this, arguments);
+    this.add({
+        username:   String,
+        password:   String,
+        firstName:  String,
+        lastName:   String,
+        email:      String
     });
-    return response;
-};
-ModelUsers.list     = function(filter)                                          {
-    var response            = new EventEmitter();
-    if (!model) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-    else model.find(filter, function(error, items)                              {
-        if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-        else response.emit(ModelUsers.RESULT, {items: items});
-    });
-    return response;
-};
-ModelUsers.save     = function(data)                                            {
-    var response        = new EventEmitter();
-    if (!model) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-    else model.findOne({ "credentials.username": data.username }, function (error, item) {
-        if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-        else                                                                    {
-            data            = update(item, data);
-            model.update({ "credentials.username": data.username}, data, {upsert: true},
-                function (error, affectedItems, newItem)                        {
-                    if (error) response.emit(ModelUsers.ERROR, {error: errorsCfg.DBError});
-                    else response.emit(ModelUsers.RESULT, {item: newItem});
-                }
-            );
-        }
-    });
-    return response;
-};
-module.exports      = ModelUsers;
-//
-function update(item, data)                                                     {
-    data                = data || { credentials:{}, identity:{ name:{} } };
-    item                = item || { created:new Date() };
-    item.modified       = new Date();
-    item.type           = data.type;
-    item.credentials    = {
-        username:       data.credentials.username,
-        password:       data.credentials.password
+
+    this.statics.create = function(data)                                        {
+        var item = new this(data);
+        item.initialize();
+        return item;
     };
-    item.identity       = {
-        name:           { first:  data.identity.name.first, last:   data.identity.name.last },
-        emails:         data.identity.emails || [],
-        phones:         data.identity.phones || [],
-        addresses:      data.identity.addresses || []
-    };
-    return item;
-}
+    
+    this.methods.initialize   = function()                                      {
+        
+    }
+};
+util.inherits(module.exports.schema, Schema);
+
+module.exports.instance                     = mongoose.model("Users", new module.exports.schema());

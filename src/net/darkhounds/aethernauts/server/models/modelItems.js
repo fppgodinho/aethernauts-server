@@ -6,24 +6,27 @@ module.exports              = {};
 module.exports.schema       = function()                                        {
     Schema.apply(this, arguments);
     this.add({
-        ip:         String,
-        token:      String,
-        created:    { type: Date, default: Date.now },
-        updated:    { type: Date, default: Date.now },
-        closed:     { type: Boolean, default: false },
-        user:       Schema.Types.ObjectId
+        name:       String,
+        flags:      [String],
+        material:   Schema.Types.ObjectId,
+        size:       Number,
+        weight:     Number
     });
-
+    
     this.statics.create = function(data)                                        {
         var item = new this(data);
         item.initialize();
         return item;
     };
     
+    this.methods.addFlag    = function(flag)                                    {
+        if (this.flags.indexOf(flag) <= 0) this.flags.push(flag);
+    };
+    
     this.methods.initialize   = function()                                      {
-        
+        this.addFlag("Item");
     }
 };
 util.inherits(module.exports.schema, Schema);
 
-module.exports.instance                     = mongoose.model("Sessions", new module.exports.schema());
+module.exports.instance                     = mongoose.model("Items", new module.exports.schema());

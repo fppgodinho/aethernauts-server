@@ -6,12 +6,7 @@ module.exports              = {};
 module.exports.schema       = function()                                        {
     Schema.apply(this, arguments);
     this.add({
-        ip:         String,
-        token:      String,
-        created:    { type: Date, default: Date.now },
-        updated:    { type: Date, default: Date.now },
-        closed:     { type: Boolean, default: false },
-        user:       Schema.Types.ObjectId
+        name:   String
     });
 
     this.statics.create = function(data)                                        {
@@ -26,4 +21,4 @@ module.exports.schema       = function()                                        
 };
 util.inherits(module.exports.schema, Schema);
 
-module.exports.instance                     = mongoose.model("Sessions", new module.exports.schema());
+module.exports.instance                     = mongoose.model("Worlds", new module.exports.schema());
