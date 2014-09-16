@@ -23,7 +23,8 @@ function _createUsers()                                                         
         password:   ControllerAuth.hashPassword("test"),
         firstName:  "Server",
         lastName:   "Admin",
-        email:      "cainvampyr@gmail.com"
+        email:      "cainvampyr@gmail.com",
+        roles:      ["admin"]
     }));
     var jhonDoe = save(ModelUsers.instance.create({
         username:   "jhondoe",
