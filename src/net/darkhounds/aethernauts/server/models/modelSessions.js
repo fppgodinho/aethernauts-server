@@ -11,7 +11,7 @@ module.exports.schema       = function()                                        
         created:    { type: Date, default: Date.now },
         updated:    { type: Date, default: Date.now },
         closed:     { type: Boolean, default: false },
-        user:       Schema.Types.ObjectId
+        user:       { type: Schema.Types.ObjectId, ref: 'Users' } 
     });
 
     this.statics.create = function(data)                                        {

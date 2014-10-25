@@ -10,7 +10,8 @@ module.exports.schema       = function()                                        
         password:   String,
         firstName:  String,
         lastName:   String,
-        email:      String
+        email:      String,
+        roles:      [String]
     });
 
     this.statics.create = function(data)                                        {
