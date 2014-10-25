@@ -114,7 +114,7 @@ function _connectRooms()                                                        
         removeEvent();
     }).populate("source");
 }
-function _connectRoom(connection)                                           {
+function _connectRoom(connection)                                               {
     addEvent();
     ModelRooms.instance.findOne({x:connection.x, y:connection.y, z:connection.z}, function(err, room){
         connection.target = room;
