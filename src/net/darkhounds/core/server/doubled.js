@@ -1,5 +1,3 @@
-exports = {
-    calculate: function () {
-        return "Hummm";
-    }
+exports.calculate = function (v) {
+   return v*2;
 };
