@@ -3,7 +3,7 @@ var socketserver    = require('ws').Server;
 var crypto          = require('crypto');
 var Response        = require(process.src + 'net/darkhounds/core/server/response.js');
 //
-var Server          = function()                                                {
+var Module          = function()                                                {
     var _module     = new EventEmitter();
     var _clients    = [];
     var _port       = 0;
@@ -30,7 +30,7 @@ var Server          = function()                                                
         _salt           = '';
         _socketServer   = null;
         //
-        setTimeout(function(){_module.emit(Server.DISCONNECTED)}, 0);
+        setTimeout(function(){_module.emit(Module.DISCONNECTED)}, 0);
         return _module;
     };
     
@@ -39,7 +39,7 @@ var Server          = function()                                                
             _clientConnected(client);
         });
         //
-        setTimeout(function(){_module.emit(Server.CONNECTED, _socketServer)}, 0);
+        setTimeout(function(){_module.emit(Module.CONNECTED, _socketServer)}, 0);
     }
     
     function _clientConnected(client)                                           {
@@ -55,26 +55,25 @@ var Server          = function()                                                
         };
         client.send(JSON.stringify({type:'session', state:'start', name: _name, token: client.token, salt: _salt}));
         //
-        setTimeout(function(){_module.emit(Server.CLIENT_CONNECTED, {client: client} )}, 0);
+        setTimeout(function(){_module.emit(Module.CLIENT_CONNECTED, {client: client} )}, 0);
     }
     
     function _clientMessage(client, request)                                    {
         request             = JSON.parse(request);
         var response        = new Response();
         response.callbackID = request.callbackID;
-        response.type       = 'response';
         response.on(Response.ERROR, function(error)                     {
             client.send(JSON.stringify({'type': 'response', status: 'error', callbackID: response.callbackID, error:error}));
         });
         response.on(Response.RESOLVED, function(result)                 {
             client.send(JSON.stringify({'type': 'response', status: 'resolved', callbackID: response.callbackID, result:result}));
         });
-        setTimeout(function(){_module.emit(Server.CLIENT_MESSAGE, {client: client, request: request, response: response})}, 0);
+        setTimeout(function(){_module.emit(Module.CLIENT_MESSAGE, {client: client, request: request, response: response})}, 0);
     }
     
     function _clientDisconnected(client)                                        {
         _clients.splice(_clients.indexOf(client), 1);
-        setTimeout(function(){_module.emit(Server.CLIENT_DISCONNECTED, {client: client})}, 0);
+        setTimeout(function(){_module.emit(Module.CLIENT_DISCONNECTED, {client: client})}, 0);
     }
     
     _module.getName          = function()                                       {
@@ -108,11 +107,11 @@ var Server          = function()                                                
     return _module;
 };
 //
-Server.CONNECTED                = 'connected';
-Server.DISCONNECTED             = 'disconnected';
-Server.ERROR                    = 'error';
-Server.CLIENT_CONNECTED         = 'clientConnected';
-Server.CLIENT_MESSAGE           = 'clientMessage';
-Server.CLIENT_DISCONNECTED      = 'clientDisconnected';
+Module.CONNECTED                = 'connected';
+Module.DISCONNECTED             = 'disconnected';
 //
-module.exports                  = Server;
+Module.CLIENT_CONNECTED         = 'clientConnected';
+Module.CLIENT_MESSAGE           = 'clientMessage';
+Module.CLIENT_DISCONNECTED      = 'clientDisconnected';
+//
+module.exports                  = Module;

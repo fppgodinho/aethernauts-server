@@ -1,3 +1,4 @@
+exports.BadData                 = {code:'BadData',               type:'protocol',    message:'Bad Request'};
 exports.UnknownProtocol         = {code:'UnknownProtocol',          type:'protocol',    message:'Unknown Protocol'};
 exports.UnknownRequestType      = {code:'UnknownRequestType',       type:'protocol',    message:'Unknown Request Type'};
 
