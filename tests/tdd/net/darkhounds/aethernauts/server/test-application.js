@@ -6,72 +6,77 @@ var Application         = require(process.src + 'net/darkhounds/aethernauts/serv
 var WebSocket           = require('ws');
 
 describe("Application :: net/darkhounds/aethernauts/server/application.js", function() {
-    this.timeout(100);
-    var requests;
+    this.timeout(500);
     serverCfg.dbName    = "aethernauts-test";
     //
     describe("Connections", function() {
         var client;
         var clientIP    = "127.0.0.1";
-        var callbackID  = "42";
         
-        before(function() {
-            application = new Application();
-            application.create(serverCfg);
+        beforeEach(function() {
+            Application.create(serverCfg);
         });
         
         it("Should connected to the DB", function(done) {
-            application.on(Application.DB_CONNECTED, function(){
+            Application.once(Application.DB_CONNECTED, function(){
                 done();
             });
         });
 
         it("Should connected to the Socket Server", function(done) {
-            application.on(Application.SERVER_CONNECTED, function(){
+            Application.once(Application.SERVER_CONNECTED, function(){
                 done();
             });
         });
         
         it("Should receive a Client connection with the ip: '" + clientIP + "'", function(done) {
-            client = new WebSocket("ws://" + clientIP + ":" + serverCfg.port);
-
-            application.on(Application.CLIENT_CONNECTED, function(data){
+            Application.once(Application.SERVER_CONNECTED, function(){
+                client = new WebSocket("ws://" + clientIP + ":" + serverCfg.port);
+            });
+            
+            Application.once(Application.CLIENT_CONNECTED, function(data) {
                 expect(data.client.ip).to.equal(clientIP);
                 done();
             });
         });
         
         it("Should catch disconnection from a client with the ip: '" + clientIP + "'", function(done) {
-            client.close();
-            application.on(Application.CLIENT_DISCONNECTED, function(data){
+            Application.once(Application.SERVER_CONNECTED, function() {
+                client = new WebSocket("ws://" + clientIP + ":" + serverCfg.port);
+            });
+            Application.once(Application.CLIENT_CONNECTED, function() {
+                client.close();
+            });
+            Application.once(Application.CLIENT_DISCONNECTED, function(data) {
                 expect(data.client.ip).to.equal(clientIP);
                 done();
             });
         });
         
-        after(function(){
-            application.destroy();
+        afterEach(function(done) {
+            Application.destroy();
+            Application.once(Application.DESTROYED, function(){
+                done();
+            });
         })
     });
     
     describe("Messages", function() {
         var client;
         var clientIP    = "127.0.0.1";
-        var callbackID  = "42";
 
         beforeEach(function(done) {
-            application = new Application(serverCfg);
-            application.on(Application.SERVER_CONNECTED, function(data){
+            Application.once(Application.CREATED, function() {
                 client      = new WebSocket("ws://" + clientIP + ":" + serverCfg.port);
             });
-            application.on(Application.CLIENT_CONNECTED, function(data){
+            Application.once(Application.CLIENT_CONNECTED, function(){
                 done();
             });
-            application.create(serverCfg);
+            Application.create(serverCfg);
         });
         
         it("Should respond with the error: '" + errorsCfg.UnknownRequestType.code + "' to unrecognized commands", function(done) {
-            client.on('message', function(data) {
+            client.once('message', function(data) {
                 data = JSON.parse(data);
                 expect(data.error.code).to.equal(errorsCfg.UnknownRequestType.code);
                 done();
@@ -80,9 +85,8 @@ describe("Application :: net/darkhounds/aethernauts/server/application.js", func
         });
         
         it("Should respond with the error: '" + errorsCfg.UnknownRequestType.code + "' to a bad login", function(done) {
-            client.on('message', function(data) {
+            client.once('message', function(data) {
                 // {"type":"response","status":"error","error":{"name":"MongoError"}}
-                console.log(data);
                 data = JSON.parse(data);
                 expect(data.error.name).to.equal("MongoError");
                 done();
@@ -90,8 +94,11 @@ describe("Application :: net/darkhounds/aethernauts/server/application.js", func
             client.send('{"type":"auth", "action":"login", "username":"teste", "password":"teste"}');
         });
         
-        afterEach(function(){
-            application.destroy();
+        afterEach(function(done){
+            Application.destroy();
+            Application.once(Application.DESTROYED, function(){
+                done();
+            });
         });
         
     });

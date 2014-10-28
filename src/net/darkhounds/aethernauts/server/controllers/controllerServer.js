@@ -5,6 +5,12 @@ var Response        = require(process.src + 'net/darkhounds/core/server/response
 //
 var Module          = function()                                                {
     var _module     = new EventEmitter();
+    _module.CONNECTED                = 'connected';
+    _module.DISCONNECTED             = 'disconnected';
+    _module.CLIENT_CONNECTED         = 'clientConnected';
+    _module.CLIENT_MESSAGE           = 'clientMessage';
+    _module.CLIENT_DISCONNECTED      = 'clientDisconnected';
+    //
     var _clients    = [];
     var _port       = 0;
     var _name       = '';
@@ -15,31 +21,38 @@ var Module          = function()                                                
         _port           = (config && config.port)?config.port:8080;
         _name           = (config && config.name)?config.name:'aethernauts@localhost';
         _salt           = (config && config.salt)?config.salt:'';
-        _socketServer   = new socketserver({port: _port}, function(a, b, c)     {
+        _socketServer   = new socketserver({port: _port}, function()            {
             _socketServerConnected();
         });
+        _socketServer._server.once('close', _socketServerDisconnected);
         //
         return _module;
     };
     
     _module.disconnect           = function()                                   {
+        if (_socketServer)                                                      {
+            _socketServer.close();
+        }
         if (_clients)   _clients.length = 0;
-        if (_socketServer) _socketServer.close();
         _port           = 0;
         _name           = '';
         _salt           = '';
         _socketServer   = null;
         //
-        setTimeout(function(){_module.emit(Module.DISCONNECTED)}, 0);
         return _module;
     };
     
-    function _socketServerConnected() {
+    function _socketServerConnected()                                           {
         _socketServer.on('connection', function(client)                         {
             _clientConnected(client);
         });
         //
-        setTimeout(function(){_module.emit(Module.CONNECTED, _socketServer)}, 0);
+        
+        setTimeout(function(){_module.emit(_module.CONNECTED, _socketServer)}, 0);
+    }
+    
+    function _socketServerDisconnected()                                        {
+        setTimeout(function(){_module.emit(_module.DISCONNECTED)}, 0);
     }
     
     function _clientConnected(client)                                           {
@@ -55,7 +68,7 @@ var Module          = function()                                                
         };
         client.send(JSON.stringify({type:'session', state:'start', name: _name, token: client.token, salt: _salt}));
         //
-        setTimeout(function(){_module.emit(Module.CLIENT_CONNECTED, {client: client} )}, 0);
+        setTimeout(function(){_module.emit(_module.CLIENT_CONNECTED, {client: client} )}, 0);
     }
     
     function _clientMessage(client, request)                                    {
@@ -68,12 +81,12 @@ var Module          = function()                                                
         response.on(Response.RESOLVED, function(result)                 {
             client.send(JSON.stringify({'type': 'response', status: 'resolved', callbackID: response.callbackID, result:result}));
         });
-        setTimeout(function(){_module.emit(Module.CLIENT_MESSAGE, {client: client, request: request, response: response})}, 0);
+        setTimeout(function(){_module.emit(_module.CLIENT_MESSAGE, {client: client, request: request, response: response})}, 0);
     }
     
     function _clientDisconnected(client)                                        {
         _clients.splice(_clients.indexOf(client), 1);
-        setTimeout(function(){_module.emit(Module.CLIENT_DISCONNECTED, {client: client})}, 0);
+        setTimeout(function(){_module.emit(_module.CLIENT_DISCONNECTED, {client: client})}, 0);
     }
     
     _module.getName          = function()                                       {
@@ -107,11 +120,4 @@ var Module          = function()                                                
     return _module;
 };
 //
-Module.CONNECTED                = 'connected';
-Module.DISCONNECTED             = 'disconnected';
-//
-Module.CLIENT_CONNECTED         = 'clientConnected';
-Module.CLIENT_MESSAGE           = 'clientMessage';
-Module.CLIENT_DISCONNECTED      = 'clientDisconnected';
-//
-module.exports                  = Module;
+module.exports                  = new Module();

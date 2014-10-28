@@ -1,14 +1,11 @@
 var EventEmitter        = require( "events" ).EventEmitter;
 var Response            = require(process.src + 'net/darkhounds/core/server/response.js');
-var serverCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confServer.js');
 var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
 var ModelWorlds         = require(process.src + "net/darkhounds/aethernauts/server/models/modelWorlds.js");
 var ModelContinents     = require(process.src + "net/darkhounds/aethernauts/server/models/modelContinents.js");
 var ModelRegions        = require(process.src + "net/darkhounds/aethernauts/server/models/modelRegions.js");
 var ModelAreas          = require(process.src + "net/darkhounds/aethernauts/server/models/modelAreas.js");
 var ModelRooms          = require(process.src + "net/darkhounds/aethernauts/server/models/modelRooms.js");
-var ModelConnections    = require(process.src + "net/darkhounds/aethernauts/server/models/modelConnections.js");
-var ModelUsers          = require(process.src + "net/darkhounds/aethernauts/server/models/modelUsers.js");
 var ModelSessions       = require(process.src + 'net/darkhounds/aethernauts/server/models/modelSessions.js');
 
 function hashPassword(password)                                                 {
