@@ -4,7 +4,7 @@ var serverCfg           = require(process.src + 'net/darkhounds/aethernauts/serv
 var ModelUsers          = require(process.src + 'net/darkhounds/aethernauts/server/models/modelUSers.js');
 var ControllerDB        = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerDB.js');
 
-describe("ControllerDB :: net/darkhounds/aethernauts/server/controllers/controllerDB.js", function() {
+describe("ModelUsers :: net/darkhounds/aethernauts/server/controllers/ModelUsers.js", function() {
     
     this.timeout(5500);
     
@@ -31,9 +31,10 @@ describe("ControllerDB :: net/darkhounds/aethernauts/server/controllers/controll
         });
     });
     
-    it("Should have the email set to '" + rawData.email + "'", function() {
-        expect(parsedData.email).to.equal(rawData.email);
+    it("Should have the same parsed data as the raw data", function() {
+        expect(parsedData.email).to.deep.equal(rawData.email);
     });
+
     
     after(function(done) {
         ControllerDB.disconnect();
