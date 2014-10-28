@@ -4,6 +4,7 @@ var serverCfg           = require(process.src + 'net/darkhounds/aethernauts/serv
 var ControllerDB        = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerDB.js');
 
 describe("ControllerDB :: net/darkhounds/aethernauts/server/controllers/controllerDB.js", function() {
+    
     this.timeout(100);
     
     serverCfg.dbName    = "aethernauts-test";
@@ -29,9 +30,7 @@ describe("ControllerDB :: net/darkhounds/aethernauts/server/controllers/controll
         //
         afterEach(function(done) {
             ControllerDB.disconnect();
-            ControllerDB.once(ControllerDB.DISCONNECTED, function() {
-                done();
-            });
+            ControllerDB.once(ControllerDB.DISCONNECTED, done);
         });
     });
     
@@ -42,9 +41,7 @@ describe("ControllerDB :: net/darkhounds/aethernauts/server/controllers/controll
             ControllerDB.connect(serverCfg);
             ControllerDB.once(ControllerDB.CONNECTED, function(){
                 DBDisconnectResponse    = ControllerDB.disconnect();
-                ControllerDB.once(ControllerDB.DISCONNECTED, function() {
-                    done();
-                });
+                ControllerDB.once(ControllerDB.DISCONNECTED, done);
             });
         });
         //

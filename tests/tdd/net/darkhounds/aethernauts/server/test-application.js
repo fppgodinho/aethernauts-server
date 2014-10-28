@@ -6,6 +6,7 @@ var Application         = require(process.src + 'net/darkhounds/aethernauts/serv
 var WebSocket           = require('ws');
 
 describe("Application :: net/darkhounds/aethernauts/server/application.js", function() {
+    //
     this.timeout(500);
     serverCfg.dbName    = "aethernauts-test";
     //
@@ -18,15 +19,11 @@ describe("Application :: net/darkhounds/aethernauts/server/application.js", func
         });
         
         it("Should connected to the DB", function(done) {
-            Application.once(Application.DB_CONNECTED, function(){
-                done();
-            });
+            Application.once(Application.DB_CONNECTED, function(){ done(); });
         });
 
         it("Should connected to the Socket Server", function(done) {
-            Application.once(Application.SERVER_CONNECTED, function(){
-                done();
-            });
+            Application.once(Application.SERVER_CONNECTED, function(){ done(); });
         });
         
         it("Should receive a Client connection with the ip: '" + clientIP + "'", function(done) {
@@ -55,23 +52,19 @@ describe("Application :: net/darkhounds/aethernauts/server/application.js", func
         
         afterEach(function(done) {
             Application.destroy();
-            Application.once(Application.DESTROYED, function(){
-                done();
-            });
+            Application.once(Application.DESTROYED, function(){ done(); });
         })
     });
     
     describe("Messages", function() {
         var client;
         var clientIP    = "127.0.0.1";
-
+        
         beforeEach(function(done) {
             Application.once(Application.CREATED, function() {
                 client      = new WebSocket("ws://" + clientIP + ":" + serverCfg.port);
             });
-            Application.once(Application.CLIENT_CONNECTED, function(){
-                done();
-            });
+            Application.once(Application.CLIENT_CONNECTED, function(){ done(); });
             Application.create(serverCfg);
         });
         
@@ -84,11 +77,10 @@ describe("Application :: net/darkhounds/aethernauts/server/application.js", func
             client.send('{"foo":"bar"}');
         });
         
-        it("Should respond with the error: '" + errorsCfg.UnknownRequestType.code + "' to a bad login", function(done) {
+        it("Should respond with the error: '" + errorsCfg.AuthError.code + "' to a bad login", function(done) {
             client.once('message', function(data) {
-                // {"type":"response","status":"error","error":{"name":"MongoError"}}
                 data = JSON.parse(data);
-                expect(data.error.name).to.equal("MongoError");
+                expect(data.error.code).to.equal(errorsCfg.AuthError.code);
                 done();
             });
             client.send('{"type":"auth", "action":"login", "username":"teste", "password":"teste"}');
@@ -96,9 +88,7 @@ describe("Application :: net/darkhounds/aethernauts/server/application.js", func
         
         afterEach(function(done){
             Application.destroy();
-            Application.once(Application.DESTROYED, function(){
-                done();
-            });
+            Application.once(Application.DESTROYED, function(){ done(); });
         });
         
     });

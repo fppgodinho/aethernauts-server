@@ -1,9 +1,10 @@
 var EventEmitter        = require( "events" ).EventEmitter;
-var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
 var ControllerDB        = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerDB.js');
 var ControllerServer    = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerServer.js');
 var ControllerAuth      = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerAuth.js');
 var ControllerAdmin     = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerAdmin.js');
+var Response            = require(process.src + 'net/darkhounds/core/server/response.js');
+var errorsCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
 //
 var Module          = function()                                                {
     var _module     = new EventEmitter();
@@ -100,13 +101,45 @@ var Module          = function()                                                
     
     function _clientMessage(data)                                               {
         if (data.request) switch(data.request.type)                             {
-            case 'auth':        ControllerAuth.handleRequest(data.client.token, data.request, data.response);    break;
-            case 'admin':       ControllerAdmin.handleRequest(data.client.token, data.request, data.response);   break;
-//            case 'characters':  charactersCtrl.handleRequest(data.client.token, data.request, data.response);    break;
-            default:            data.response.setError(errorsCfg.UnknownRequestType);                              break;
+            case 'auth':        _parseAuthMessage(data);                                break;
+            case 'admin':       _parseAdminMessage(data);                               break;
+            case 'characters':  _parseCharactersMessage(data);                          break;
+            default:            data.response.setError(errorsCfg.UnknownRequestType);   break;
         } else data.response.setError(errorsCfg.UnknownProtocol);
         //
         setTimeout(function(){ _module.emit(_module.CLIENT_MESSAGED, data) }, 0);
+    }
+    
+    function _parseAuthMessage(data)                                            {
+        var token       = data.client.token;
+        var request     = data.request;
+        var response    = data.response;
+        
+        var callback = function (err, data)                                     {
+            if (!err) response.emit(Response.RESOLVED, data);
+            else response.emit(Response.ERROR, err);
+        };
+        
+        switch(request.action)                                                  {
+            case 'register':
+                ControllerAuth.register(request.username, request.password, request.firstname, request.lastname, request.email, callback);
+                break;
+            case 'login':
+                ControllerAuth.login(token, request.username, request.password, request.ip, callback);
+                break;
+            case 'logout':
+                ControllerAuth.logout(token, callback);
+                break;
+            default:            response.emit(Response.ERROR, errorsCfg.UnknownRequestType);    break;
+        }
+    }
+    
+    function _parseAdminMessage(data)                                           {
+        ControllerAdmin.handleRequest(data.client.token, data.request, data.response);
+    }
+
+    function _parseCharactersMessage(data)                                      {
+        // charactersCtrl.handleRequest(data.client.token, data.request, data.response)
     }
     
     function _clientDisconnected(data)                                          {

@@ -1,4 +1,4 @@
-exports.BadData                 = {code:'BadData',               type:'protocol',    message:'Bad Request'};
+exports.BadData                 = {code:'BadData',                  type:'protocol',    message:'Bad Request'};
 exports.UnknownProtocol         = {code:'UnknownProtocol',          type:'protocol',    message:'Unknown Protocol'};
 exports.UnknownRequestType      = {code:'UnknownRequestType',       type:'protocol',    message:'Unknown Request Type'};
 
@@ -18,3 +18,5 @@ exports.InvalidCharacter        = {code:'InvalidCharacter',         type:'charac
 exports.UserNotAdmin            = {code:'UserNotAdmin',             type:'admin',       message:'User has no admin privileges'};
 
 exports.WorldNotCreated         = {code:'WorldNotCreated',          type:'engine',      message:'World hast been generated yet'};
+
+exports.modelNotInitialized     = {code:'modelNotInitialized',      type:'model',       message:"Model hasn't been initialized yet"};

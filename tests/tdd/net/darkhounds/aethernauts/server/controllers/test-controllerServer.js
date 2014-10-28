@@ -5,6 +5,7 @@ var ControllerServer    = require(process.src + 'net/darkhounds/aethernauts/serv
 var WebSocket           = require('ws');
 
 describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/controllerServer.js", function() {
+
     this.timeout(100);
     //
     var clientIP                = "127.0.0.1";
@@ -51,9 +52,7 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
         //
         afterEach(function(done) {
             ControllerServer.disconnect();
-            ControllerServer.once(ControllerServer.DISCONNECTED, function(){
-                done();
-            });
+            ControllerServer.once(ControllerServer.DISCONNECTED, function(){ done(); });
         });
     });
     
@@ -65,9 +64,7 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
             ControllerServer.connect(serverCfg);
             ControllerServer.once(ControllerServer.CONNECTED, function(){
                 serverDisconnectResponse    = ControllerServer.disconnect();
-                ControllerServer.once(ControllerServer.DISCONNECTED, function() {
-                    done();
-                });
+                ControllerServer.once(ControllerServer.DISCONNECTED, function(){ done(); });
             });
         });
         //
@@ -93,9 +90,7 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
         //
         beforeEach(function(done) {
             ControllerServer.connect(serverCfg);
-            ControllerServer.once(ControllerServer.CONNECTED, function() {
-                done();
-            });
+            ControllerServer.once(ControllerServer.CONNECTED, function(){ done(); });
         });
         //
         it("The clients count should be set to '" + clients + "' after they connected", function(done) {
@@ -144,9 +139,7 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
         //
         afterEach(function(done) {
             ControllerServer.disconnect();
-            ControllerServer.once(ControllerServer.DISCONNECTED, function(){
-                done();
-            });
+            ControllerServer.once(ControllerServer.DISCONNECTED, function(){ done(); });
         });
     });
     
@@ -156,9 +149,7 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
         //
         beforeEach(function(done) {
             ControllerServer.connect(serverCfg);
-            ControllerServer.once(ControllerServer.CONNECTED, function() {
-                done();
-            });
+            ControllerServer.once(ControllerServer.CONNECTED, function(){ done(); });
         });
         //
         it("The client message property 'foo' should be set to 'bar'", function(done) {
@@ -181,18 +172,14 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
         //
         afterEach(function(done) {
             ControllerServer.disconnect();
-            ControllerServer.once(ControllerServer.DISCONNECTED, function(){
-                done();
-            });
+            ControllerServer.once(ControllerServer.DISCONNECTED, function(){ done(); });
         });
     });
     
     describe("Misc", function() {
         beforeEach(function(done) {
             ControllerServer.connect(serverCfg);
-            ControllerServer.once(ControllerServer.CONNECTED, function() {
-                done();
-            });
+            ControllerServer.once(ControllerServer.CONNECTED, function(){ done(); });
         });
         //
         it("The client should be registered by it's token", function(done) {
@@ -214,9 +201,9 @@ describe("ControllerServer :: net/darkhounds/aethernauts/server/controllers/cont
         //
         afterEach(function(done){
             ControllerServer.disconnect();
-            ControllerServer.once(ControllerServer.DISCONNECTED, function(){
-                done();
-            });
+            ControllerServer.once(ControllerServer.DISCONNECTED, function(){ done(); });
         });
     });
+
+    
 });

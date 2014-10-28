@@ -1,11 +1,8 @@
-var util                    = require('util');
-var mongoose                = require('mongoose');
-var Schema                  = mongoose.Schema;
+var Mongoose                = require("mongoose");
 
-module.exports              = {};
-module.exports.schema       = function()                                        {
-    Schema.apply(this, arguments);
-    this.add({
+var Module = function () {
+    var _name       = "Users";
+    var _schema     = new Mongoose.Schema({
         username:   String,
         password:   String,
         firstName:  String,
@@ -13,17 +10,8 @@ module.exports.schema       = function()                                        
         email:      String,
         roles:      [String]
     });
-
-    this.statics.create = function(data)                                        {
-        var item = new this(data);
-        item.initialize();
-        return item;
-    };
     
-    this.methods.initialize   = function()                                      {
-        
-    }
+    return Mongoose.connection.models[_name] || Mongoose.model(_name, _schema);
 };
-util.inherits(module.exports.schema, Schema);
 
-module.exports.instance                     = mongoose.model("Users", new module.exports.schema());
+module.exports = Module();

@@ -1,6 +1,6 @@
 var EventEmitter    = require( "events" ).EventEmitter;
-var socketserver    = require('ws').Server;
-var crypto          = require('crypto');
+var SocketServer    = require('ws').Server;
+var Crypto          = require('crypto');
 var Response        = require(process.src + 'net/darkhounds/core/server/response.js');
 //
 var Module          = function()                                                {
@@ -21,7 +21,7 @@ var Module          = function()                                                
         _port           = (config && config.port)?config.port:8080;
         _name           = (config && config.name)?config.name:'aethernauts@localhost';
         _salt           = (config && config.salt)?config.salt:'';
-        _socketServer   = new socketserver({port: _port}, function()            {
+        _socketServer   = new SocketServer({port: _port}, function()            {
             _socketServerConnected();
         });
         _socketServer._server.once('close', _socketServerDisconnected);
@@ -59,7 +59,7 @@ var Module          = function()                                                
         _clients.push(client);
         //
         client.ip           = client.upgradeReq.connection.remoteAddress;
-        client.token        = crypto.createHash('md5').update(client.ip + Math.random()).digest('hex').toUpperCase();
+        client.token        = Crypto.createHash('md5').update(client.ip + Math.random()).digest('hex').toUpperCase();
         client.onmessage    = function(event)                                   {
             _clientMessage(client, event.data);
         };

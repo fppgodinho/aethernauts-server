@@ -21,7 +21,7 @@ var Module          = function()                                                
     _module.connect = function (config)                                         {
         if (_connStatus == "connecting" || _connStatus == "connected")          {
             setTimeout(function(){ _module.emit(_module.CONNECTION_ERROR) }, 0);
-            return;
+            return _module;
         }
         
         _config         = config || {dbIP:_defaultIP, dbPort: _defaultPort, dbName: _defaultName};
@@ -39,7 +39,7 @@ var Module          = function()                                                
     };
     
     _module.disconnect = function (config)                                      {
-        if (_connStatus == "disconnecting" || _connStatus == "disconnected") return;
+        if (_connStatus == "disconnecting" || _connStatus == "disconnected") return _module;
         Mongoose.connection.once('disconnected', function () {
             setTimeout(function(){ _module.emit(_module.DISCONNECTED) }, 0);
         });

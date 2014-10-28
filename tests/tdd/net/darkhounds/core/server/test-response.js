@@ -1,10 +1,9 @@
-process.src     = process.cwd() + '/src/';
-var expect      = require('chai').expect;
-var sinon       = require('sinon');
-var mockery     = require('mockery');
-var Response    = require(process.src + 'net/darkhounds/core/server/response.js');
 
 describe("Response :: net/darkhounds/core/server/response.js", function() {
+    process.src     = process.cwd() + '/src/';
+    var expect      = require('chai').expect;
+    var Response    = require(process.src + 'net/darkhounds/core/server/response.js');
+    //
     this.timeout(100);
     var response;
     
