@@ -1,32 +1,16 @@
-var util                    = require('util');
-var mongoose                = require('mongoose');
-var Schema                  = mongoose.Schema;
+var Mongoose                = require("mongoose");
 
-module.exports              = {};
-module.exports.schema       = function()                                        {
-    Schema.apply(this, arguments);
-    this.add({
+var Module = function () {
+    var _name       = "Items";
+    var _schema     = new Mongoose.Schema({
         name:       String,
-        flags:      [String],
-        material:   Schema.Types.ObjectId,
+        flags:      { type: Array, "default": ["Item"] },
+        material:   Mongoose.Schema.Types.ObjectId,
         size:       Number,
         weight:     Number
     });
     
-    this.statics.create = function(data)                                        {
-        var item = new this(data);
-        item.initialize();
-        return item;
-    };
-    
-    this.methods.addFlag    = function(flag)                                    {
-        if (this.flags.indexOf(flag) <= 0) this.flags.push(flag);
-    };
-    
-    this.methods.initialize   = function()                                      {
-        this.addFlag("Item");
-    }
+    return Mongoose.connection.models[_name] || Mongoose.model(_name, _schema);
 };
-util.inherits(module.exports.schema, Schema);
 
-module.exports.instance                     = mongoose.model("Items", new module.exports.schema());
+module.exports = Module();

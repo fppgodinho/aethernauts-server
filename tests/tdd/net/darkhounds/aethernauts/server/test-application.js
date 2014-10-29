@@ -7,7 +7,7 @@ var WebSocket           = require('ws');
 
 describe("Application :: net/darkhounds/aethernauts/server/application.js", function() {
     //
-    this.timeout(500);
+    this.timeout(5000);
     serverCfg.dbName    = "aethernauts-test";
     //
     describe("Connections", function() {
