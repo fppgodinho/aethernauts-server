@@ -1,18 +1,17 @@
 process.src             = process.cwd() + '/src/';
 var expect              = require('chai').expect;
 var serverCfg           = require(process.src + 'net/darkhounds/aethernauts/server/config/confServer.js');
-var ModelItems          = require(process.src + 'net/darkhounds/aethernauts/server/models/modelItems.js');
+var ModelSessions    = require(process.src + 'net/darkhounds/aethernauts/server/models/modelSessions.js');
 var ControllerDB        = require(process.src + 'net/darkhounds/aethernauts/server/controllers/controllerDB.js');
 
-describe("ModelItems :: net/darkhounds/aethernauts/server/controllers/modelItems.js", function() {
+describe("ModelSessions :: net/darkhounds/aethernauts/server/controllers/modelSessions.js", function() {
     
     this.timeout(5000);
     
     serverCfg.dbName    = "aethernauts-test";
     var rawData         = {
-        name:       "Rod of God",
-        size:       "1",
-        weight:     "10"
+        ip:         "127.0.0.1",
+        token:      "aFakeTokeForDummyUser"
     };
     var parsedData;
     //
@@ -21,16 +20,12 @@ describe("ModelItems :: net/darkhounds/aethernauts/server/controllers/modelItems
         ControllerDB.connect(serverCfg);
     });
     
-    it("Should created a new item with the rawdata", function(done) {
-        ModelItems.create(rawData, function (err, data) {
+    it("Should created a new session with the rawdata", function(done) {
+        ModelSessions.create(rawData, function (err, data) {
             expect(err).to.be.null;
             parsedData = data;
             done();
         });
-    });
-    
-    it("Should have 'Item' flag ", function() {
-        expect(parsedData.flags).to.contain("Item");
     });
     
     after(function(done) {

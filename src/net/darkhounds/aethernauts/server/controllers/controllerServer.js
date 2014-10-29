@@ -61,7 +61,7 @@ var Module          = function()                                                
         client.ip           = client.upgradeReq.connection.remoteAddress;
         client.token        = Crypto.createHash('md5').update(client.ip + Math.random()).digest('hex').toUpperCase();
         client.onmessage    = function(event)                                   {
-            _clientMessage(client, event.data);
+            _clientMessaged(client, event.data);
         };
         client.onclose      = function(event)                                   {
             _clientDisconnected(client);
@@ -71,19 +71,27 @@ var Module          = function()                                                
         setTimeout(function(){_module.emit(_module.CLIENT_CONNECTED, {client: client} )}, 0);
     }
     
-    function _clientMessage(client, request)                                    {
+    function _clientMessaged(client, request)                                   {
         request             = JSON.parse(request);
         var response        = new Response();
         response.callbackID = request.callbackID;
-        response.on(Response.ERROR, function(error)                     {
-            client.send(JSON.stringify({'type': 'response', status: 'error', callbackID: response.callbackID, error:error}));
+        response.on(Response.ERROR, function(error)                             {
+            _messageError(client, response, error);
         });
-        response.on(Response.RESOLVED, function(result)                 {
-            client.send(JSON.stringify({'type': 'response', status: 'resolved', callbackID: response.callbackID, result:result}));
+        response.on(Response.RESOLVED, function(result)                         {
+            _messageResolved(client, response, result);
         });
         setTimeout(function(){_module.emit(_module.CLIENT_MESSAGE, {client: client, request: request, response: response})}, 0);
     }
-    
+
+    function _messageError(client, response, error)                             {
+        client.send(JSON.stringify({'type': 'response', status: 'error', callbackID: response.callbackID, error:error}));
+    }
+
+    function _messageResolved(client, response, result)                         {
+        client.send(JSON.stringify({'type': 'response', status: 'resolved', callbackID: response.callbackID, result:result}));
+    }
+
     function _clientDisconnected(client)                                        {
         _clients.splice(_clients.indexOf(client), 1);
         setTimeout(function(){_module.emit(_module.CLIENT_DISCONNECTED, {client: client})}, 0);

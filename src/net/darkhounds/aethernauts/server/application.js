@@ -20,20 +20,20 @@ var Module          = function()                                                
     _module.CLIENT_DISCONNECTED     = "clientDisconnected";
     //
     var _config;
-    var _created    = false;
-    var _locked      = false;
+    var _created        = false;
+    var _locked         = false;
     //
-    _module.isCreated = function()                                              {
+    _module.isCreated   = function()                                            {
         return _created;
     };
     //
-    _module.create  = function(config)                                          {
+    _module.create      = function(config)                                      {
         if (_locked || _created) return; _locked = true;
         _config     = config;
         ControllerServer.on(ControllerServer.CONNECTED, _serverConnected);
         ControllerServer.on(ControllerServer.DISCONNECTED, _serverDisconnected);
         ControllerServer.on(ControllerServer.CLIENT_CONNECTED, _clientConnected);
-        ControllerServer.on(ControllerServer.CLIENT_MESSAGE, _clientMessage);
+        ControllerServer.on(ControllerServer.CLIENT_MESSAGE, _clientMessaged);
         ControllerServer.on(ControllerServer.CLIENT_DISCONNECTED, _clientDisconnected);
         ControllerServer.connect(_config);
         //
@@ -43,44 +43,44 @@ var Module          = function()                                                
     };
     
     function _dbConnected()                                                     {
-        _checkApplicationCreated();
+        _checkApplicationStatus();
         //
         setTimeout(function(){_module.emit(_module.DB_CONNECTED)}, 0);
     }
-
+    
     function _serverConnected()                                                 {
-        _checkApplicationCreated();
+        _checkApplicationStatus();
         //
         setTimeout(function(){_module.emit(_module.SERVER_CONNECTED)}, 0);
     }
-
-    _module.destroy = function()                                                {
+    
+    _module.destroy     = function()                                            {
         if (_locked || !_created) return; _locked = true;
         ControllerServer.disconnect();
         _config = null;
     };
-
+    
     function _serverDisconnected()                                              {
         ControllerServer.removeListener(ControllerServer.CONNECTED, _serverConnected);
         ControllerServer.removeListener(ControllerServer.DISCONNECTED, _serverDisconnected);
         ControllerServer.removeListener(ControllerServer.CLIENT_CONNECTED, _clientConnected);
-        ControllerServer.removeListener(ControllerServer.CLIENT_MESSAGE, _clientMessage);
+        ControllerServer.removeListener(ControllerServer.CLIENT_MESSAGE, _clientMessaged);
         ControllerServer.removeListener(ControllerServer.CLIENT_DISCONNECTED, _clientDisconnected);
         ControllerDB.disconnect();
-        _checkApplicationCreated();
+        _checkApplicationStatus();
         //
         setTimeout(function(){_module.emit(_module.SERVER_DISCONNECTED)}, 0);
     }
-
+    
     function _dbDisconnected()                                                  {
         ControllerDB.removeListener(ControllerDB.CONNECTED, _dbConnected);
         ControllerDB.removeListener(ControllerDB.DISCONNECTED, _dbDisconnected);
-        _checkApplicationCreated();
+        _checkApplicationStatus();
         //
         setTimeout(function(){_module.emit(_module.DB_DISCONNECTED)}, 0);
     }
     
-    function _checkApplicationCreated()                                         {
+    function _checkApplicationStatus()                                          {
         if (!_created && ControllerDB.isConnected() && ControllerServer.isConnected()) {
             _locked     = false;
             _created    = true;
@@ -94,23 +94,22 @@ var Module          = function()                                                
         }
     }
     
-    
     function _clientConnected(data)                                             {
         setTimeout(function(){ _module.emit(_module.CLIENT_CONNECTED, data) }, 0);
     }
     
-    function _clientMessage(data)                                               {
+    function _clientMessaged(data)                                              {
         if (data.request) switch(data.request.type)                             {
-            case 'auth':        _parseAuthMessage(data);                                break;
-            case 'admin':       _parseAdminMessage(data);                               break;
-            case 'characters':  _parseCharactersMessage(data);                          break;
+            case 'auth':        _resolveMessageAuth(data);                              break;
+            case 'admin':       _resolveMessageAdmin(data);                             break;
+            case 'characters':  _parseMessageCharacters(data);                          break;
             default:            data.response.setError(errorsCfg.UnknownRequestType);   break;
         } else data.response.setError(errorsCfg.UnknownProtocol);
         //
         setTimeout(function(){ _module.emit(_module.CLIENT_MESSAGED, data) }, 0);
     }
     
-    function _parseAuthMessage(data)                                            {
+    function _resolveMessageAuth(data)                                          {
         var token       = data.client.token;
         var request     = data.request;
         var response    = data.response;
@@ -134,11 +133,30 @@ var Module          = function()                                                
         }
     }
     
-    function _parseAdminMessage(data)                                           {
-        ControllerAdmin.handleRequest(data.client.token, data.request, data.response);
+    function _resolveMessageAdmin(data)                                         {
+        var token       = data.client.token;
+        var request     = data.request;
+        var response    = data.response;
+        
+        var callback = function (err, data)                                     {
+            if (!err) response.emit(Response.RESOLVED, data);
+            else response.emit(Response.ERROR, err);
+        };
+        
+        ControllerAdmin.isAdmin(token, function(err)                            {
+            if (err) response.emit(Response.ERROR, err);
+            else switch(request.action)                                         {
+                case 'getWorld':
+                    ControllerAdmin.getWorld(request.name || "Nod", callback);
+                    break;
+                default:        response.emit(Response.ERROR, errorsCfg.UnknownRequestType);    break;
+            }
+        });
+        
+        ControllerAdmin.handleRequest(token, request, response);
     }
 
-    function _parseCharactersMessage(data)                                      {
+    function _resolveMessageCharacters(data)                                    {
         // charactersCtrl.handleRequest(data.client.token, data.request, data.response)
     }
     
@@ -150,8 +168,7 @@ var Module          = function()                                                
         setTimeout(function(){ _module.emit(_module.CLIENT_DISCONNECTED, data) }, 0);
     }
     
-    
     return _module;
 };
 //
-module.exports                  = new Module();
+module.exports          = new Module();

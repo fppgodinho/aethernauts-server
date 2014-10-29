@@ -7,25 +7,25 @@ var serverCfg       = require(process.src + 'net/darkhounds/aethernauts/server/c
 var errorsCfg       = require(process.src + 'net/darkhounds/aethernauts/server/config/confErrors.js');
 
 var Module  = function()                                                        {
-    var _module = new EventEmitter();
+    var _module             = new EventEmitter();
     
-    _module.hashPassword     = function(password)                               {
+    _module.hashPassword    = function(password)                                {
         return _hashPassword(password + '_' + serverCfg.salt);
     };
     
-    _module.register         = function(username, password, firstname, lastname, email, callback) {
-        ModelUsers.instance.findOne({"username": username}, function(err, user)     {
-            if (!err)                                                               {
-                if (!user)                                                          {
-                    user = ModelUsers.instance.create(                              {
+    _module.register        = function(username, password, firstname, lastname, email, callback) {
+        ModelUsers.instance.findOne({"username": username}, function(err, user) {
+            if (!err)                                                           {
+                if (!user)                                                      {
+                    user = ModelUsers.instance.create(                          {
                         username:   username,
                         password:   _module.hashPassword(password),
                         firstName:  firstname,
                         lastName:   lastname,
                         email:      email
                     });
-                    user.save(function(err)                                         {
-                        if (!err && callback)                                       {
+                    user.save(function(err)                                     {
+                        if (!err && callback)                                   {
                             user.password = null;
                             callback(null, user);
                         } else if (callback) callback(err);
@@ -35,15 +35,15 @@ var Module  = function()                                                        
         });
     };
     
-    _module.login            = function(token, username, password, ip, callback) {
-        ModelUsers.findOne({"username": username}, function(err, user)     {
-            if (!err)                                                               {
-                if (user)                                                           {
+    _module.login           = function(token, username, password, ip, callback) {
+        ModelUsers.findOne({"username": username}, function(err, user)          {
+            if (!err)                                                           {
+                if (user)                                                       {
                     var storedpassword  = _hashPassword(user.password + token);
-                    if (storedpassword == password)                                 {
+                    if (storedpassword == password)                             {
                         ModelSessions.instance.findOne({user: user, closed: false}, function(err, session) {
-                            if (!err)                                               {
-                                if (session)                                        {
+                            if (!err)                                           {
+                                if (session)                                    {
                                     session.updated = Date.now();
                                     session.closed  = true;
                                     session.save({});
@@ -52,8 +52,8 @@ var Module  = function()                                                        
                                     ip:         ip,
                                     token:      token,
                                     user:       user
-                                }).save(function(err)                               {
-                                    if (!err && callback)                           {
+                                }).save(function(err)                           {
+                                    if (!err && callback)                       {
                                         user.password = null;
                                         callback(null, user);
                                     } else if (callback) callback(err);
@@ -66,10 +66,10 @@ var Module  = function()                                                        
         });
     };
     
-    _module.logout           = function(token, callback)                     {
-        ModelSessions.instance.findOne({token: token}, function(err, session)       {
-            if (!err)                                                               {
-                if (session)                                                        {
+    _module.logout          = function(token, callback)                         {
+        ModelSessions.findOne({token: token}, function(err, session)            {
+            if (!err)                                                           {
+                if (session)                                                    {
                     session.updated = Date.now();
                     session.closed  = true;
                     session.save(function(err){

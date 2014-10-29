@@ -1,29 +1,17 @@
-var util                    = require('util');
-var mongoose                = require('mongoose');
-var Schema                  = mongoose.Schema;
+var Mongoose                = require("mongoose");
 
-module.exports              = {};
-module.exports.schema       = function()                                        {
-    Schema.apply(this, arguments);
-    this.add({
+var Module = function () {
+    var _name       = "Sessions";
+    var _schema     = new Mongoose.Schema({
         ip:         String,
         token:      String,
         created:    { type: Date, default: Date.now },
         updated:    { type: Date, default: Date.now },
         closed:     { type: Boolean, default: false },
-        user:       { type: Schema.Types.ObjectId, ref: 'Users' } 
+        user:       { type: Mongoose.Schema.Types.ObjectId, ref: 'Users' }
     });
 
-    this.statics.create = function(data)                                        {
-        var item = new this(data);
-        item.initialize();
-        return item;
-    };
-    
-    this.methods.initialize   = function()                                      {
-        
-    }
+    return Mongoose.connection.models[_name] || Mongoose.model(_name, _schema);
 };
-util.inherits(module.exports.schema, Schema);
 
-module.exports.instance                     = mongoose.model("Sessions", new module.exports.schema());
+module.exports = Module();

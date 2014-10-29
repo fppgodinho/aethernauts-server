@@ -1,20 +1,17 @@
-var util                    = require('util');
-var mongoose                = require('mongoose');
-var itemModel               = require('./modelItems.js');
-var Schema                  = mongoose.Schema;
-module.exports              = {};
-module.exports.schema       = function(){
-    itemModel.schema.apply(this, arguments);
-    this.add({
-        
-    });
-    
-    var _superInitialize    = this.methods.initialize;
-    this.methods.initialize = function ()                                       {
-        _superInitialize.apply(this);
-        this.addFlag("Tool");
-    }
-};
-util.inherits(module.exports.schema, itemModel.schema);
+var Mongoose                = require("mongoose");
+var ModelItems              = require('./modelItems.js');
 
-module.exports.instance                     = mongoose.model("Tools", new module.exports.schema());
+var Module = function () {
+    var _name       = "Tools";
+    var _schema     = new Mongoose.Schema({
+        name:       String,
+        flags:      { type: Array, "default": ["Item", "Tool"] },
+        material:   Mongoose.Schema.Types.ObjectId,
+        size:       Number,
+        weight:     Number
+    });
+
+    return Mongoose.connection.models[_name] || Mongoose.model(_name, _schema);
+};
+
+module.exports = Module();
